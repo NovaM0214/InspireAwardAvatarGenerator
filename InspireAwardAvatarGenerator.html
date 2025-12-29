@@ -298,7 +298,7 @@
           </div>
         </div>
 
-        <button id="generate-btn" class="btn">生成所有图像</button>
+        <button id="generate-btn" class="btn" style="display: none;">生成所有图像</button>
         <button id="download-btn" class="btn secondary" style="display: none;">下载所有图片 (压缩包)</button>
         
         <div style="margin-top: 20px; font-size: 0.9rem; color: #666; line-height: 1.5;">
@@ -392,8 +392,9 @@
               // Sort to maintain order if async loading messes it up? 
               // Usually fine, but for strict order we might need index.
               // For now simple push is okay.
-              showLoading(false);
+              // showLoading(false); // Don't hide loading yet, continue to generation
               updatePreviews();
+              generateImages(); // Trigger generation automatically
             }
           }
           img.src = event.target.result;
@@ -477,7 +478,8 @@
           return;
       }
 
-      showLoading(true, 0);
+      // showLoading(true, 0); // Already showing loading if triggered from upload
+      document.querySelector('.loading-text').textContent = '正在生成图像...';
       generatedImageData = [];
       
       // Process in chunks to avoid freezing UI
@@ -503,9 +505,17 @@
 
           return new Promise(resolve => {
             canvas.toBlob((blob) => {
-              generatedImageData.push({ name: item.name, blob: blob });
+              // Ensure filename ends with .png
+              let newName = item.name;
+              const lastDotIndex = newName.lastIndexOf('.');
+              if (lastDotIndex !== -1) {
+                newName = newName.substring(0, lastDotIndex);
+              }
+              newName += '.png';
+
+              generatedImageData.push({ name: newName, blob: blob });
               resolve();
-            }, 'image/jpeg', 0.9); // Specify format and quality
+            }, 'image/png');
           });
         }));
 
